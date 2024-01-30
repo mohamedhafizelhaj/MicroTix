@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+option php_namespace = "GRPC\\Services\\Event";
+option php_metadata_namespace = "GRPC\\Services\\Event\\Meta";
+
+package microtix;
+
+service Event {
+    rpc createEvent(EventData) returns (EventInstance);
+
+    rpc updateEvent(EventInstance) returns (EventInstance);
+
+    rpc deleteEvent(EventId) returns (Status);
+
+    rpc getEvents(GetEventsRequest) returns (PaginatedEventsResponse);
+
+    rpc myEvents(MyEventsRequest) returns (PaginatedEventsResponse);
+
+    rpc getEvent(EventId) returns (EventInstance);
+
+    rpc canPerformAction(AuthData) returns (Status);
+}
+
+message EventData {
+    string name = 1;
+    int64 organizer_id = 2;
+    string description = 3;
+    string startTime = 4;
+    string endTime = 5;
+    string address = 6;
+    string ticketPrice = 7;
+    string discount = 8;
+}
+
+message EventInstance {
+    int32 id = 1;
+    EventData eventData = 2;
+}
+
+message EventId {
+    int32 id = 1;
+}
+
+message Status {
+    bool success = 1;
+}
+
+message GetEventsRequest {
+    string page_token = 1;
+    int32 page_size = 2;
+}
+
+message MyEventsRequest {
+    int32 user_id = 1;
+    string page_token = 2;
+    int32 page_size = 3;
+}
+
+message PaginatedEventsResponse {
+    repeated EventInstance events = 1;
+    string next_page_token = 2;
+}
+
+message AuthData {
+    int32 EventId = 1;
+    int32 OrganizerId = 2;
+}

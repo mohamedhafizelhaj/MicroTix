@@ -1,0 +1,112 @@
+version: "3"
+
+services:
+  database:
+    image: mysql:8.0
+    restart: always
+    env_file:
+      - ./Database/.env
+    networks:
+      MicroTix-Net:
+        ipv4_address: 172.20.0.3
+    volumes:
+      - ./Database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3
+    env_file:
+      - ./RabbitMQ/.env
+    networks:
+      MicroTix-Net:
+        ipv4_address: 172.20.0.8
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./RabbitMQ/enabled_plugins:/etc/rabbitmq/enabled_plugins
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      timeout: 20s
+      retries: 10
+
+  event_management:
+    build:
+      context: ./Event-Management
+    networks:
+      MicroTix-Net:
+        ipv4_address: 172.20.0.4
+    volumes:
+      - ./Event-Management/laravel-app:/var/www/html
+    depends_on:
+      database:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  notification:
+    build:
+      context: ./Notification
+    networks:
+      MicroTix-Net:
+        ipv4_address: 172.20.0.7
+    volumes:
+      - ./Notification/laravel-app:/var/www/html
+    depends_on:
+      database:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  payment:
+    build:
+      context: ./Payment
+    networks:
+      MicroTix-Net:
+        ipv4_address: 172.20.0.6
+    volumes:
+      - ./Payment/laravel-app:/var/www/html
+    depends_on:
+      database:
+        condition: service_healthy
+
+  ticketing:
+    build:
+      context: ./Ticketing
+    networks:
+      MicroTix-Net:
+        ipv4_address: 172.20.0.5
+    volumes:
+      - ./Ticketing/laravel-app:/var/www/html
+    depends_on:
+      database:
+        condition: service_healthy
+        
+  api_gateway:
+    build:
+      context: ./API-Gateway
+    networks:
+      MicroTix-Net:
+    ports:
+      - "8000:80"
+    volumes:
+      - ./API-Gateway/laravel-app:/var/www/html
+    depends_on:
+      - event_management
+      - ticketing
+      - payment
+      - notification
+
+networks:
+  MicroTix-Net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  mysql_data:
+  rabbitmq_data:

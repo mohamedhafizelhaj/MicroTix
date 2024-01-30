@@ -1,0 +1,13 @@
+version: "3"
+
+rpc:
+    listen: tcp://127.0.0.1:6001
+
+server:
+  command: "php grpc-worker.php"
+
+grpc:
+  listen: "tcp://0.0.0.0:9001"
+
+  proto:
+    - "app/Proto/notification.proto"

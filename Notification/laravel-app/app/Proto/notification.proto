@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option php_namespace = "GRPC\\Services\\Notification";
+option php_metadata_namespace = "GRPC\\Services\\Notification\\Meta";
+
+import "google/protobuf/empty.proto";
+
+package microtix;
+
+service Notification {
+    rpc addTransaction(TransactionData) returns (google.protobuf.Empty);
+}
+
+message TransactionData {
+    int32 event_id = 1;
+    string email = 2;
+}
